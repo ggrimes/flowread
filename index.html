@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpeedRead</title>
+<style>
+  :root {
+    --bg-color: #1e1e2e;
+    --text-color: #a0a0a0;
+    --center-color: #ff00ff;
+    --panel-bg: #2a2a3e;
+    --border-color: #3a3a4e;
+    --font-family: 'Courier New', monospace;
+    --letter-spacing: 0.05em;
+    --tb-line-height: 2;
+    --tb-word-spacing: 0.1em;
+    --tb-sentence-gap: 0.6em;
+    --tb-clause-gap: 0.2em;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-color);
+    color: #ccc;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    text-align: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  header h1 {
+    font-size: 1.4rem;
+    font-weight: 300;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #ddd;
+  }
+
+  .app-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    max-width: 1000px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+    gap: 20px;
+  }
+
+  /* --- Input Section --- */
+  .input-section {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+  }
+
+  .input-section h2 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #888;
+    margin-bottom: 12px;
+  }
+
+  .input-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .input-tabs button {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: #888;
+    padding: 6px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+
+  .input-tabs button.active {
+    background: var(--center-color);
+    color: #fff;
+    border-color: var(--center-color);
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  #paste-area {
+    width: 100%;
+    min-height: 120px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: #ccc;
+    padding: 12px;
+    font-size: 0.9rem;
+    resize: vertical;
+    font-family: inherit;
+  }
+
+  .drop-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #888;
+  }
+
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--center-color);
+    color: var(--center-color);
+  }
+
+  .drop-zone input { display: none; }
+
+  .load-btn {
+    display: inline-block;
+    margin-top: 12px;
+    background: var(--center-color);
+    color: #fff;
+    border: none;
+    padding: 8px 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: opacity 0.2s;
+  }
+
+  .load-btn:hover { opacity: 0.85; }
+
+  /* --- Reader Display --- */
+  .reader-section {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 30px 20px;
+    text-align: center;
+    display: none;
+  }
+
+  .reader-section.visible { display: block; }
+
+  .reader-frame {
+    position: relative;
+    background: var(--bg-color);
+    border-radius: 6px;
+    padding: 40px 20px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  .focus-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    transform: translateX(-50%);
+    background: var(--center-color);
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  #word-display {
+    font-family: var(--font-family);
+    font-size: 3rem;
+    letter-spacing: var(--letter-spacing);
+    white-space: pre;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.2em;
+  }
+
+  #word-display .wd-left {
+    display: flex;
+    justify-content: flex-end;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  #word-display .wd-center {
+    flex-shrink: 0;
+    color: var(--center-color);
+  }
+
+  #word-display .wd-right {
+    display: flex;
+    justify-content: flex-start;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  #word-display .before, #word-display .after {
+    color: var(--text-color);
+  }
+
+  #word-display .ctx {
+    color: var(--text-color);
+    opacity: 0.3;
+  }
+
+  #word-display .ctx-sep {
+    color: var(--text-color);
+    opacity: 0.15;
+  }
+
+  /* --- Controls --- */
+  .controls-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .controls-bar button {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: #ccc;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .controls-bar button:hover {
+    border-color: var(--center-color);
+    color: var(--center-color);
+  }
+
+  .controls-bar button.playing {
+    background: var(--center-color);
+    border-color: var(--center-color);
+    color: #fff;
+  }
+
+  .speed-display {
+    font-size: 0.85rem;
+    color: #888;
+    min-width: 80px;
+    text-align: center;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--bg-color);
+    border-radius: 2px;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--center-color);
+    width: 0%;
+    transition: width 0.1s linear;
+    border-radius: 2px;
+  }
+
+  /* --- Text Body --- */
+  .text-body-section {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    display: none;
+  }
+
+  .text-body-section.visible { display: block; }
+
+  .text-body-section h2 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #888;
+    margin-bottom: 12px;
+  }
+
+  #text-body {
+    max-height: 300px;
+    overflow-y: auto;
+    font-size: 0.9rem;
+    line-height: var(--tb-line-height, 2);
+    word-spacing: var(--tb-word-spacing, 0.1em);
+    color: #666;
+    padding: 8px;
+    scroll-behavior: smooth;
+  }
+
+  #text-body span {
+    transition: color 0.15s;
+  }
+
+  #text-body span.current-word {
+    color: var(--center-color);
+    font-weight: 600;
+  }
+
+  #text-body span.read-word {
+    color: #999;
+  }
+
+  #text-body .sentence-break {
+    display: block;
+    height: 0;
+    margin-bottom: var(--tb-sentence-gap, 0.6em);
+  }
+
+  #text-body .clause-break {
+    display: block;
+    height: 0;
+    margin-bottom: var(--tb-clause-gap, 0.2em);
+  }
+
+  #text-body .bullet-line {
+    display: block;
+    padding-left: 1.4em;
+    text-indent: -1.1em;
+    margin-bottom: var(--tb-sentence-gap, 0.6em);
+  }
+
+  #text-body .bullet-line::before {
+    content: '\2022';
+    color: var(--center-color);
+    margin-right: 0.4em;
+    font-weight: bold;
+  }
+
+  /* --- Settings Panel --- */
+  .settings-toggle {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: #888;
+    padding: 6px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+    transition: all 0.2s;
+  }
+
+  .settings-toggle:hover {
+    border-color: var(--center-color);
+    color: var(--center-color);
+  }
+
+  .settings-panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    display: none;
+  }
+
+  .settings-panel.visible { display: block; }
+
+  .settings-panel h2 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #888;
+    margin-bottom: 16px;
+  }
+
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .setting-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .setting-item label {
+    font-size: 0.8rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .setting-item input[type="color"] {
+    width: 100%;
+    height: 36px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-color);
+    cursor: pointer;
+    padding: 2px;
+  }
+
+  .setting-item input[type="range"] {
+    width: 100%;
+    accent-color: var(--center-color);
+  }
+
+  .setting-item select, .setting-item input[type="number"] {
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: #ccc;
+    padding: 6px 8px;
+    font-size: 0.85rem;
+  }
+
+  .setting-value {
+    font-size: 0.75rem;
+    color: #666;
+    text-align: right;
+  }
+
+  /* --- Scrollbar --- */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-color); }
+  ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+
+  /* --- Loading indicator --- */
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    color: #888;
+  }
+
+  .loading.visible { display: block; }
+
+  .loading .spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--center-color);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SpeedRead</h1>
+</header>
+
+<div class="app-container">
+
+  <!-- Input Section -->
+  <div class="input-section" id="input-section">
+    <h2>Load Text</h2>
+    <div class="input-tabs">
+      <button class="active" data-tab="paste-tab">Paste Text</button>
+      <button data-tab="file-tab">Upload File</button>
+    </div>
+    <div id="paste-tab" class="tab-content active">
+      <textarea id="paste-area" placeholder="Paste your text here..."></textarea>
+      <button class="load-btn" id="load-paste-btn">Load Text</button>
+    </div>
+    <div id="file-tab" class="tab-content">
+      <div class="drop-zone" id="drop-zone">
+        <p>Drop a file here or click to browse</p>
+        <p style="font-size:0.8rem; margin-top:8px; color:#666;">Supports: PDF, DOCX, TXT</p>
+        <input type="file" id="file-input" accept=".pdf,.docx,.txt,.text,.md">
+      </div>
+      <div class="loading" id="file-loading">
+        <span class="spinner"></span> Processing file...
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings -->
+  <button class="settings-toggle" id="settings-toggle" style="display:none;">Settings</button>
+  <div class="settings-panel" id="settings-panel">
+    <h2>Settings</h2>
+    <div class="settings-grid">
+      <div class="setting-item">
+        <label>Center Letter Color</label>
+        <input type="color" id="set-center-color" value="#ff00ff">
+      </div>
+      <div class="setting-item">
+        <label>Word Color</label>
+        <input type="color" id="set-text-color" value="#a0a0a0">
+      </div>
+      <div class="setting-item">
+        <label>Background Color</label>
+        <input type="color" id="set-bg-color" value="#1e1e2e">
+      </div>
+      <div class="setting-item">
+        <label>Font Family</label>
+        <select id="set-font">
+          <option value="'Courier New', monospace">Courier New</option>
+          <option value="'Georgia', serif">Georgia</option>
+          <option value="'Verdana', sans-serif">Verdana</option>
+          <option value="'Arial', sans-serif">Arial</option>
+          <option value="'Times New Roman', serif">Times New Roman</option>
+          <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+          <option value="'Consolas', monospace">Consolas</option>
+          <option value="'Palatino', serif">Palatino</option>
+        </select>
+      </div>
+      <div class="setting-item">
+        <label>Letter Spacing</label>
+        <input type="range" id="set-spacing" min="0" max="0.5" step="0.01" value="0.05">
+        <span class="setting-value" id="spacing-value">0.05em</span>
+      </div>
+      <div class="setting-item">
+        <label>Speed (WPM)</label>
+        <input type="number" id="set-wpm" min="50" max="1500" step="25" value="300">
+      </div>
+      <div class="setting-item">
+        <label>Font Size</label>
+        <input type="range" id="set-font-size" min="1.5" max="6" step="0.25" value="3">
+        <span class="setting-value" id="font-size-value">3rem</span>
+      </div>
+      <div class="setting-item">
+        <label>Context Words</label>
+        <input type="range" id="set-context-words" min="0" max="5" step="1" value="0">
+        <span class="setting-value" id="context-words-value">0</span>
+      </div>
+    </div>
+
+    <h2 style="margin-top:20px;">Text Body Display</h2>
+    <div class="settings-grid">
+      <div class="setting-item">
+        <label>Layout</label>
+        <select id="set-layout">
+          <option value="sentence" selected>One sentence per line</option>
+          <option value="continuous">Continuous</option>
+        </select>
+      </div>
+      <div class="setting-item">
+        <label>Word Spacing</label>
+        <input type="range" id="set-word-spacing" min="0" max="1" step="0.05" value="0.1">
+        <span class="setting-value" id="word-spacing-value">0.1em</span>
+      </div>
+      <div class="setting-item">
+        <label>Line Height</label>
+        <input type="range" id="set-line-height" min="1" max="4" step="0.1" value="2">
+        <span class="setting-value" id="line-height-value">2</span>
+      </div>
+      <div class="setting-item" id="sentence-gap-item">
+        <label>Sentence Gap</label>
+        <input type="range" id="set-sentence-gap" min="0" max="2" step="0.1" value="0.6">
+        <span class="setting-value" id="sentence-gap-value">0.6em</span>
+      </div>
+      <div class="setting-item" id="bullet-item">
+        <label>Bullet Points</label>
+        <select id="set-bullets">
+          <option value="off">Off</option>
+          <option value="on">Each sentence</option>
+        </select>
+      </div>
+      <div class="setting-item" id="clause-break-item">
+        <label>Clause Breaks</label>
+        <select id="set-clause-breaks">
+          <option value="off">Off</option>
+          <option value="on">New line after clauses</option>
+        </select>
+      </div>
+      <div class="setting-item" id="clause-gap-item" style="display:none;">
+        <label>Clause Gap</label>
+        <input type="range" id="set-clause-gap" min="0" max="1.5" step="0.05" value="0.2">
+        <span class="setting-value" id="clause-gap-value">0.2em</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reader -->
+  <div class="reader-section" id="reader-section">
+    <div class="reader-frame" id="reader-frame">
+      <div class="focus-line" id="focus-line"></div>
+      <div id="word-display">
+        <span class="wd-left"><span class="ctx-left"></span><span class="before"></span></span><span class="wd-center"></span><span class="wd-right"><span class="after"></span><span class="ctx-right"></span></span>
+      </div>
+    </div>
+    <div class="controls-bar">
+      <button id="btn-restart" title="Restart">&#8634;</button>
+      <button id="btn-back" title="Back 10 words">&#9664;&#9664;</button>
+      <button id="btn-play" title="Play / Pause">&#9654;</button>
+      <button id="btn-forward" title="Forward 10 words">&#9654;&#9654;</button>
+      <span class="speed-display" id="speed-display">300 WPM</span>
+    </div>
+    <div class="progress-bar" id="progress-bar">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+  </div>
+
+  <!-- Text Body -->
+  <div class="text-body-section" id="text-body-section">
+    <h2>Text</h2>
+    <div id="text-body"></div>
+  </div>
+
+</div>
+
+<!-- PDF.js from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<!-- Mammoth.js for DOCX -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+<script>
+(function() {
+  'use strict';
+
+  // --- State ---
+  let words = [];
+  let wordIndex = 0;
+  let playing = false;
+  let timer = null;
+  let wpm = 300;
+  let rawText = '';
+  let layoutMode = 'sentence';
+  let showBullets = false;
+  let showClauseBreaks = false;
+  let contextWords = 0;
+
+  // --- DOM refs ---
+  const inputSection = document.getElementById('input-section');
+  const readerSection = document.getElementById('reader-section');
+  const textBodySection = document.getElementById('text-body-section');
+  const settingsToggle = document.getElementById('settings-toggle');
+  const settingsPanel = document.getElementById('settings-panel');
+  const wordDisplay = document.getElementById('word-display');
+  const textBody = document.getElementById('text-body');
+  const progressFill = document.getElementById('progress-fill');
+  const speedDisplay = document.getElementById('speed-display');
+  const focusLine = document.getElementById('focus-line');
+  const readerFrame = document.getElementById('reader-frame');
+  const fileLoading = document.getElementById('file-loading');
+
+  // --- Input tabs ---
+  document.querySelectorAll('.input-tabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.input-tabs button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // --- Load pasted text ---
+  document.getElementById('load-paste-btn').addEventListener('click', () => {
+    const text = document.getElementById('paste-area').value.trim();
+    if (text) loadText(text);
+  });
+
+  // --- File upload ---
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) handleFile(fileInput.files[0]);
+  });
+
+  async function handleFile(file) {
+    const ext = file.name.split('.').pop().toLowerCase();
+    fileLoading.classList.add('visible');
+
+    try {
+      let text = '';
+      if (ext === 'txt' || ext === 'text' || ext === 'md') {
+        text = await file.text();
+      } else if (ext === 'pdf') {
+        text = await extractPDF(file);
+      } else if (ext === 'docx') {
+        text = await extractDOCX(file);
+      } else {
+        alert('Unsupported file type: ' + ext);
+        fileLoading.classList.remove('visible');
+        return;
+      }
+      fileLoading.classList.remove('visible');
+      if (text.trim()) loadText(text.trim());
+      else alert('No text could be extracted from this file.');
+    } catch (err) {
+      fileLoading.classList.remove('visible');
+      alert('Error reading file: ' + err.message);
+      console.error(err);
+    }
+  }
+
+  async function extractPDF(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(item => item.str).join(' ') + '\n';
+    }
+    return text;
+  }
+
+  async function extractDOCX(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    return result.value;
+  }
+
+  // --- Load text into reader ---
+  function loadText(text) {
+    rawText = text;
+    words = text.split(/\s+/).filter(w => w.length > 0);
+    if (words.length === 0) return;
+
+    wordIndex = 0;
+    playing = false;
+    clearInterval(timer);
+
+    buildTextBody();
+
+    // Show reader sections
+    readerSection.classList.add('visible');
+    textBodySection.classList.add('visible');
+    settingsToggle.style.display = 'inline-block';
+
+    // Collapse input
+    inputSection.style.display = 'none';
+
+    displayWord(0);
+    updateProgress();
+    updateBtnState();
+    positionFocusLine();
+  }
+
+  // Detect if a word ends a sentence
+  function isSentenceEnd(w) {
+    return /[.!?]["'\u201D\u2019)]*$/.test(w);
+  }
+
+  // Detect if a word ends a clause (comma, semicolon, colon, or conjunctions "and"/"or" as next word)
+  function isClauseEnd(w, nextWord) {
+    if (/[,;:]$/.test(w)) return true;
+    if (nextWord && /^(and|or|but|yet|nor|so|because|although|however|therefore|moreover|furthermore|whereas|while)$/i.test(nextWord)) return true;
+    return false;
+  }
+
+  function buildTextBody() {
+    const savedIndex = wordIndex;
+    textBody.innerHTML = '';
+
+    const useSentenceBreaks = layoutMode === 'sentence';
+    let sentenceContainer = null; // used when bullets are on
+
+    // Start a new bullet/sentence container
+    function startSentence() {
+      if (showBullets && useSentenceBreaks) {
+        sentenceContainer = document.createElement('span');
+        sentenceContainer.className = 'bullet-line';
+        textBody.appendChild(sentenceContainer);
+      } else {
+        sentenceContainer = null;
+      }
+    }
+
+    function getParent() {
+      return sentenceContainer || textBody;
+    }
+
+    if (showBullets && useSentenceBreaks) startSentence();
+
+    words.forEach((w, i) => {
+      const span = document.createElement('span');
+      span.textContent = w;
+      span.dataset.index = i;
+      span.addEventListener('click', () => jumpToWord(i));
+      span.style.cursor = 'pointer';
+      getParent().appendChild(span);
+
+      const isLast = i >= words.length - 1;
+      const sentEnd = isSentenceEnd(w);
+      const nextWord = !isLast ? words[i + 1] : null;
+      const clauseEnd = !sentEnd && showClauseBreaks && isClauseEnd(w, nextWord);
+
+      if (!isLast) {
+        if (useSentenceBreaks && sentEnd) {
+          // Sentence break
+          if (showBullets) {
+            // Close current bullet, start a new one
+            startSentence();
+          } else {
+            const br = document.createElement('span');
+            br.className = 'sentence-break';
+            getParent().appendChild(br);
+          }
+        } else if (clauseEnd) {
+          // Clause break (new line, smaller gap)
+          const br = document.createElement('span');
+          br.className = 'clause-break';
+          getParent().appendChild(br);
+        } else {
+          getParent().appendChild(document.createTextNode(' '));
+        }
+      }
+    });
+
+    // Re-apply highlight if we had a position
+    if (savedIndex > 0 && savedIndex < words.length) {
+      highlightTextBody(savedIndex);
+    }
+  }
+
+  // --- Spritz-style ORP (Optimal Recognition Point) ---
+  function getORP(word) {
+    const len = word.length;
+    if (len <= 1) return 0;
+    if (len <= 3) return 1;
+    if (len <= 5) return 2;
+    if (len <= 9) return 3;
+    if (len <= 13) return 4;
+    return 5;
+  }
+
+  function displayWord(index) {
+    if (index < 0 || index >= words.length) return;
+    wordIndex = index;
+    const word = words[index];
+    const orp = getORP(word);
+
+    const before = word.slice(0, orp);
+    const center = word[orp];
+    const after = word.slice(orp + 1);
+
+    wordDisplay.querySelector('.before').textContent = before;
+    wordDisplay.querySelector('.wd-center').textContent = center;
+    wordDisplay.querySelector('.after').textContent = after;
+
+    // Context words
+    const ctxLeft = wordDisplay.querySelector('.ctx-left');
+    const ctxRight = wordDisplay.querySelector('.ctx-right');
+    ctxLeft.innerHTML = '';
+    ctxRight.innerHTML = '';
+
+    if (contextWords > 0) {
+      // Left context
+      const leftWords = [];
+      for (let j = Math.max(0, index - contextWords); j < index; j++) {
+        leftWords.push(words[j]);
+      }
+      if (leftWords.length > 0) {
+        const span = document.createElement('span');
+        span.className = 'ctx';
+        span.textContent = leftWords.join(' ');
+        ctxLeft.appendChild(span);
+        const sep = document.createElement('span');
+        sep.className = 'ctx-sep';
+        sep.textContent = '  ';
+        ctxLeft.appendChild(sep);
+      }
+
+      // Right context
+      const rightWords = [];
+      for (let j = index + 1; j <= Math.min(words.length - 1, index + contextWords); j++) {
+        rightWords.push(words[j]);
+      }
+      if (rightWords.length > 0) {
+        const sep = document.createElement('span');
+        sep.className = 'ctx-sep';
+        sep.textContent = '  ';
+        ctxRight.appendChild(sep);
+        const span = document.createElement('span');
+        span.className = 'ctx';
+        span.textContent = rightWords.join(' ');
+        ctxRight.appendChild(span);
+      }
+    }
+
+    highlightTextBody(index);
+    updateProgress();
+    positionFocusLine();
+  }
+
+  function positionFocusLine() {
+    // Focus line is now fixed at 50% via CSS — no JS positioning needed
+  }
+
+  function highlightTextBody(index) {
+    const spans = textBody.querySelectorAll('span[data-index]');
+    spans.forEach(span => {
+      const i = parseInt(span.dataset.index);
+      span.classList.remove('current-word', 'read-word');
+      if (i === index) span.classList.add('current-word');
+      else if (i < index) span.classList.add('read-word');
+    });
+
+    // Scroll current word into view
+    const currentSpan = textBody.querySelector('.current-word');
+    if (currentSpan) {
+      const container = textBody;
+      const spanTop = currentSpan.offsetTop - container.offsetTop;
+      const spanHeight = currentSpan.offsetHeight;
+      const containerHeight = container.clientHeight;
+      const scrollTarget = spanTop - containerHeight / 2 + spanHeight / 2;
+      container.scrollTop = scrollTarget;
+    }
+  }
+
+  function updateProgress() {
+    const pct = words.length > 0 ? (wordIndex / (words.length - 1)) * 100 : 0;
+    progressFill.style.width = pct + '%';
+  }
+
+  // --- Playback controls ---
+  function play() {
+    if (words.length === 0) return;
+    if (wordIndex >= words.length - 1) wordIndex = 0;
+    playing = true;
+    updateBtnState();
+    scheduleNext();
+  }
+
+  function pause() {
+    playing = false;
+    clearTimeout(timer);
+    updateBtnState();
+  }
+
+  function scheduleNext() {
+    if (!playing) return;
+    const word = words[wordIndex];
+    // Longer pauses for punctuation
+    let delay = 60000 / wpm;
+    if (word && /[.!?]$/.test(word)) delay *= 2.5;
+    else if (word && /[,;:]$/.test(word)) delay *= 1.5;
+
+    timer = setTimeout(() => {
+      if (wordIndex < words.length - 1) {
+        wordIndex++;
+        displayWord(wordIndex);
+        scheduleNext();
+      } else {
+        // End of text
+        playing = false;
+        updateBtnState();
+      }
+    }, delay);
+  }
+
+  function togglePlay() {
+    if (playing) pause();
+    else play();
+  }
+
+  function jumpToWord(index) {
+    const wasPlaying = playing;
+    pause();
+    wordIndex = Math.max(0, Math.min(words.length - 1, index));
+    displayWord(wordIndex);
+    if (wasPlaying) play();
+  }
+
+  function updateBtnState() {
+    const btn = document.getElementById('btn-play');
+    if (playing) {
+      btn.innerHTML = '&#9646;&#9646;';
+      btn.classList.add('playing');
+    } else {
+      btn.innerHTML = '&#9654;';
+      btn.classList.remove('playing');
+    }
+    speedDisplay.textContent = wpm + ' WPM';
+  }
+
+  document.getElementById('btn-play').addEventListener('click', togglePlay);
+  document.getElementById('btn-restart').addEventListener('click', () => jumpToWord(0));
+  document.getElementById('btn-back').addEventListener('click', () => jumpToWord(wordIndex - 10));
+  document.getElementById('btn-forward').addEventListener('click', () => jumpToWord(wordIndex + 10));
+
+  // Progress bar click to seek
+  document.getElementById('progress-bar').addEventListener('click', e => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = (e.clientX - rect.left) / rect.width;
+    jumpToWord(Math.round(pct * (words.length - 1)));
+  });
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+    if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+    if (e.code === 'ArrowLeft') { e.preventDefault(); jumpToWord(wordIndex - 1); }
+    if (e.code === 'ArrowRight') { e.preventDefault(); jumpToWord(wordIndex + 1); }
+    if (e.code === 'ArrowUp') { e.preventDefault(); changeWPM(25); }
+    if (e.code === 'ArrowDown') { e.preventDefault(); changeWPM(-25); }
+  });
+
+  function changeWPM(delta) {
+    wpm = Math.max(50, Math.min(1500, wpm + delta));
+    document.getElementById('set-wpm').value = wpm;
+    speedDisplay.textContent = wpm + ' WPM';
+  }
+
+  // --- Settings ---
+  settingsToggle.addEventListener('click', () => {
+    settingsPanel.classList.toggle('visible');
+  });
+
+  function applyCSS(prop, value) {
+    document.documentElement.style.setProperty(prop, value);
+  }
+
+  document.getElementById('set-center-color').addEventListener('input', e => {
+    applyCSS('--center-color', e.target.value);
+  });
+
+  document.getElementById('set-text-color').addEventListener('input', e => {
+    applyCSS('--text-color', e.target.value);
+  });
+
+  document.getElementById('set-bg-color').addEventListener('input', e => {
+    applyCSS('--bg-color', e.target.value);
+  });
+
+  document.getElementById('set-font').addEventListener('change', e => {
+    applyCSS('--font-family', e.target.value);
+  });
+
+  document.getElementById('set-spacing').addEventListener('input', e => {
+    applyCSS('--letter-spacing', e.target.value + 'em');
+    document.getElementById('spacing-value').textContent = e.target.value + 'em';
+    positionFocusLine();
+  });
+
+  document.getElementById('set-wpm').addEventListener('change', e => {
+    wpm = Math.max(50, Math.min(1500, parseInt(e.target.value) || 300));
+    e.target.value = wpm;
+    speedDisplay.textContent = wpm + ' WPM';
+  });
+
+  document.getElementById('set-font-size').addEventListener('input', e => {
+    wordDisplay.style.fontSize = e.target.value + 'rem';
+    document.getElementById('font-size-value').textContent = e.target.value + 'rem';
+    positionFocusLine();
+  });
+
+  document.getElementById('set-context-words').addEventListener('input', e => {
+    contextWords = parseInt(e.target.value) || 0;
+    document.getElementById('context-words-value').textContent = contextWords;
+    if (words.length > 0) displayWord(wordIndex);
+  });
+
+  // --- Text body display settings ---
+  function updateTextBodySettingsVisibility() {
+    const isSentence = layoutMode === 'sentence';
+    document.getElementById('sentence-gap-item').style.display = isSentence ? 'flex' : 'none';
+    document.getElementById('bullet-item').style.display = isSentence ? 'flex' : 'none';
+    document.getElementById('clause-gap-item').style.display = showClauseBreaks ? 'flex' : 'none';
+  }
+
+  document.getElementById('set-layout').addEventListener('change', e => {
+    layoutMode = e.target.value;
+    updateTextBodySettingsVisibility();
+    if (words.length > 0) buildTextBody();
+  });
+
+  document.getElementById('set-bullets').addEventListener('change', e => {
+    showBullets = e.target.value === 'on';
+    if (words.length > 0) buildTextBody();
+  });
+
+  document.getElementById('set-clause-breaks').addEventListener('change', e => {
+    showClauseBreaks = e.target.value === 'on';
+    updateTextBodySettingsVisibility();
+    if (words.length > 0) buildTextBody();
+  });
+
+  document.getElementById('set-word-spacing').addEventListener('input', e => {
+    applyCSS('--tb-word-spacing', e.target.value + 'em');
+    document.getElementById('word-spacing-value').textContent = e.target.value + 'em';
+  });
+
+  document.getElementById('set-line-height').addEventListener('input', e => {
+    applyCSS('--tb-line-height', e.target.value);
+    document.getElementById('line-height-value').textContent = e.target.value;
+  });
+
+  document.getElementById('set-sentence-gap').addEventListener('input', e => {
+    applyCSS('--tb-sentence-gap', e.target.value + 'em');
+    document.getElementById('sentence-gap-value').textContent = e.target.value + 'em';
+  });
+
+  document.getElementById('set-clause-gap').addEventListener('input', e => {
+    applyCSS('--tb-clause-gap', e.target.value + 'em');
+    document.getElementById('clause-gap-value').textContent = e.target.value + 'em';
+  });
+
+  // Reposition focus line on resize
+  window.addEventListener('resize', positionFocusLine);
+
+})();
+</script>
+</body>
+</html>
