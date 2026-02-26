@@ -1,16 +1,61 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SpeedRead</title>
 <style>
-  :root {
+  /* ===== Theme Variables ===== */
+  [data-theme="dark"] {
     --bg-color: #1e1e2e;
     --text-color: #a0a0a0;
     --center-color: #ff00ff;
     --panel-bg: #2a2a3e;
     --border-color: #3a3a4e;
+    --ui-text: #ccc;
+    --ui-muted: #888;
+    --ui-faint: #666;
+    --read-word-color: #999;
+    --body-text-color: #666;
+  }
+  [data-theme="light"] {
+    --bg-color: #f5f2eb;
+    --text-color: #555;
+    --center-color: #d6336c;
+    --panel-bg: #fffdf8;
+    --border-color: #ddd5c8;
+    --ui-text: #333;
+    --ui-muted: #777;
+    --ui-faint: #999;
+    --read-word-color: #aaa;
+    --body-text-color: #999;
+  }
+  [data-theme="sepia"] {
+    --bg-color: #f4ecd8;
+    --text-color: #5b4636;
+    --center-color: #b5451b;
+    --panel-bg: #faf6ee;
+    --border-color: #d4c9b0;
+    --ui-text: #4a3728;
+    --ui-muted: #8a7a6a;
+    --ui-faint: #a89a8a;
+    --read-word-color: #b5a898;
+    --body-text-color: #a89a8a;
+  }
+  [data-theme="highcontrast"] {
+    --bg-color: #000000;
+    --text-color: #ffffff;
+    --center-color: #00ff88;
+    --panel-bg: #111111;
+    --border-color: #444444;
+    --ui-text: #ffffff;
+    --ui-muted: #cccccc;
+    --ui-faint: #888888;
+    --read-word-color: #aaaaaa;
+    --body-text-color: #888888;
+  }
+
+  :root {
     --font-family: 'Courier New', monospace;
     --letter-spacing: 0.05em;
     --tb-line-height: 2;
@@ -23,27 +68,124 @@
 
   body {
     background: var(--bg-color);
-    color: #ccc;
+    color: var(--ui-text);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    transition: background 0.3s, color 0.3s;
   }
 
-  header {
-    text-align: center;
-    padding: 20px;
+  /* ===== Header ===== */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
     border-bottom: 1px solid var(--border-color);
+    background: var(--panel-bg);
+    transition: background 0.3s, border-color 0.3s;
+    position: sticky;
+    top: 0;
+    z-index: 100;
   }
 
-  header h1 {
-    font-size: 1.4rem;
-    font-weight: 300;
-    letter-spacing: 0.3em;
+  .top-bar h1 {
+    font-size: 1.1rem;
+    font-weight: 400;
+    letter-spacing: 0.25em;
     text-transform: uppercase;
-    color: #ddd;
+    color: var(--ui-text);
   }
 
+  .top-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .top-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--ui-muted);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .top-btn:hover {
+    border-color: var(--center-color);
+    color: var(--center-color);
+  }
+
+  .top-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  .top-btn.icon-only {
+    padding: 6px 8px;
+  }
+
+  /* Theme selector dropdown */
+  .theme-picker {
+    position: relative;
+  }
+
+  .theme-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 6px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 6px;
+    min-width: 140px;
+    z-index: 200;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+
+  .theme-menu.open { display: block; }
+
+  .theme-menu button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--ui-text);
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    text-align: left;
+    transition: background 0.15s;
+  }
+
+  .theme-menu button:hover {
+    background: var(--border-color);
+  }
+
+  .theme-menu button .swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    flex-shrink: 0;
+  }
+
+  .theme-menu button.active .swatch {
+    border-color: var(--center-color);
+    box-shadow: 0 0 0 2px var(--center-color);
+  }
+
+  /* ===== App Container ===== */
   .app-container {
     display: flex;
     flex-direction: column;
@@ -52,36 +194,41 @@
     width: 100%;
     margin: 0 auto;
     padding: 20px;
-    gap: 20px;
+    gap: 16px;
   }
 
-  /* --- Input Section --- */
+  /* ===== Input Section ===== */
   .input-section {
     background: var(--panel-bg);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 20px;
+    border-radius: 10px;
+    padding: 24px;
+    transition: background 0.3s, border-color 0.3s;
   }
 
   .input-section h2 {
     font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: #888;
+    color: var(--ui-muted);
     margin-bottom: 12px;
   }
 
   .input-tabs {
     display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
+    gap: 4px;
+    margin-bottom: 16px;
+    background: var(--bg-color);
+    padding: 3px;
+    border-radius: 6px;
   }
 
   .input-tabs button {
+    flex: 1;
     background: transparent;
-    border: 1px solid var(--border-color);
-    color: #888;
-    padding: 6px 16px;
+    border: none;
+    color: var(--ui-muted);
+    padding: 8px 16px;
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.85rem;
@@ -89,9 +236,9 @@
   }
 
   .input-tabs button.active {
-    background: var(--center-color);
-    color: #fff;
-    border-color: var(--center-color);
+    background: var(--panel-bg);
+    color: var(--ui-text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
   }
 
   .tab-content { display: none; }
@@ -99,25 +246,31 @@
 
   #paste-area {
     width: 100%;
-    min-height: 120px;
+    min-height: 140px;
     background: var(--bg-color);
     border: 1px solid var(--border-color);
-    border-radius: 4px;
-    color: #ccc;
-    padding: 12px;
+    border-radius: 6px;
+    color: var(--ui-text);
+    padding: 14px;
     font-size: 0.9rem;
     resize: vertical;
     font-family: inherit;
+    transition: border-color 0.2s;
+  }
+
+  #paste-area:focus {
+    outline: none;
+    border-color: var(--center-color);
   }
 
   .drop-zone {
     border: 2px dashed var(--border-color);
-    border-radius: 8px;
-    padding: 40px;
+    border-radius: 10px;
+    padding: 48px 24px;
     text-align: center;
     cursor: pointer;
     transition: all 0.2s;
-    color: #888;
+    color: var(--ui-muted);
   }
 
   .drop-zone:hover, .drop-zone.drag-over {
@@ -129,27 +282,29 @@
 
   .load-btn {
     display: inline-block;
-    margin-top: 12px;
+    margin-top: 14px;
     background: var(--center-color);
     color: #fff;
     border: none;
-    padding: 8px 24px;
-    border-radius: 4px;
+    padding: 10px 28px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 0.85rem;
+    font-weight: 500;
     transition: opacity 0.2s;
   }
 
   .load-btn:hover { opacity: 0.85; }
 
-  /* --- Reader Display --- */
+  /* ===== Reader Display ===== */
   .reader-section {
     background: var(--panel-bg);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 30px 20px;
+    border-radius: 10px;
+    padding: 24px 20px 20px;
     text-align: center;
     display: none;
+    transition: background 0.3s, border-color 0.3s;
   }
 
   .reader-section.visible { display: block; }
@@ -157,10 +312,11 @@
   .reader-frame {
     position: relative;
     background: var(--bg-color);
-    border-radius: 6px;
-    padding: 40px 20px;
+    border-radius: 8px;
+    padding: 48px 20px;
     margin-bottom: 20px;
     overflow: hidden;
+    transition: background 0.3s;
   }
 
   .focus-line {
@@ -171,7 +327,7 @@
     width: 2px;
     transform: translateX(-50%);
     background: var(--center-color);
-    opacity: 0.3;
+    opacity: 0.25;
     pointer-events: none;
   }
 
@@ -220,51 +376,95 @@
     opacity: 0.15;
   }
 
-  /* --- Controls --- */
-  .controls-bar {
+  /* ===== Transport Controls ===== */
+  .transport {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 16px;
+    gap: 14px;
   }
 
-  .controls-bar button {
+  .transport-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .transport-buttons button {
     background: transparent;
     border: 1px solid var(--border-color);
-    color: #ccc;
-    width: 40px;
-    height: 40px;
+    color: var(--ui-text);
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     cursor: pointer;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
   }
 
-  .controls-bar button:hover {
+  .transport-buttons button:hover {
     border-color: var(--center-color);
     color: var(--center-color);
   }
 
-  .controls-bar button.playing {
+  .transport-buttons button#btn-play {
+    width: 48px;
+    height: 48px;
+    font-size: 1.2rem;
+    border-width: 2px;
+  }
+
+  .transport-buttons button.playing {
     background: var(--center-color);
     border-color: var(--center-color);
     color: #fff;
   }
 
-  .speed-display {
+  /* Speed slider row */
+  .speed-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .speed-row label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ui-muted);
+    flex-shrink: 0;
+  }
+
+  .speed-row input[type="range"] {
+    flex: 1;
+    accent-color: var(--center-color);
+    height: 4px;
+  }
+
+  .speed-row .speed-val {
     font-size: 0.85rem;
-    color: #888;
-    min-width: 80px;
-    text-align: center;
+    font-weight: 600;
+    color: var(--ui-text);
+    min-width: 65px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Progress */
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
   }
 
   .progress-bar {
-    width: 100%;
+    flex: 1;
     height: 4px;
     background: var(--bg-color);
     border-radius: 2px;
@@ -280,13 +480,23 @@
     border-radius: 2px;
   }
 
-  /* --- Text Body --- */
+  .word-counter {
+    font-size: 0.75rem;
+    color: var(--ui-faint);
+    min-width: 90px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+
+  /* ===== Text Body ===== */
   .text-body-section {
     background: var(--panel-bg);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 20px;
     display: none;
+    transition: background 0.3s, border-color 0.3s;
   }
 
   .text-body-section.visible { display: block; }
@@ -295,7 +505,7 @@
     font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: #888;
+    color: var(--ui-muted);
     margin-bottom: 12px;
   }
 
@@ -305,14 +515,12 @@
     font-size: 0.9rem;
     line-height: var(--tb-line-height, 2);
     word-spacing: var(--tb-word-spacing, 0.1em);
-    color: #666;
+    color: var(--body-text-color);
     padding: 8px;
     scroll-behavior: smooth;
   }
 
-  #text-body span {
-    transition: color 0.15s;
-  }
+  #text-body span { transition: color 0.15s; }
 
   #text-body span.current-word {
     color: var(--center-color);
@@ -320,7 +528,7 @@
   }
 
   #text-body span.read-word {
-    color: #999;
+    color: var(--read-word-color);
   }
 
   #text-body .sentence-break {
@@ -349,64 +557,139 @@
     font-weight: bold;
   }
 
-  /* --- Settings Panel --- */
-  .settings-toggle {
-    background: transparent;
-    border: 1px solid var(--border-color);
-    color: #888;
-    padding: 6px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    margin-bottom: 12px;
-    transition: all 0.2s;
+  /* ===== Settings Drawer ===== */
+  .settings-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 500;
+    opacity: 0;
+    transition: opacity 0.25s;
   }
 
-  .settings-toggle:hover {
-    border-color: var(--center-color);
-    color: var(--center-color);
+  .settings-overlay.open {
+    display: block;
+    opacity: 1;
   }
 
-  .settings-panel {
+  .settings-drawer {
+    position: fixed;
+    top: 0;
+    right: -360px;
+    width: 340px;
+    max-width: 90vw;
+    height: 100vh;
     background: var(--panel-bg);
+    border-left: 1px solid var(--border-color);
+    z-index: 600;
+    overflow-y: auto;
+    padding: 20px;
+    transition: right 0.3s ease, background 0.3s;
+  }
+
+  .settings-drawer.open {
+    right: 0;
+  }
+
+  .drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .drawer-header h2 {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--ui-text);
+  }
+
+  .drawer-close {
+    background: transparent;
+    border: none;
+    color: var(--ui-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+    border-radius: 4px;
+    transition: color 0.2s;
+  }
+
+  .drawer-close:hover { color: var(--center-color); }
+
+  /* Accordion sections */
+  .accordion-section {
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 20px;
-    display: none;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: border-color 0.3s;
   }
 
-  .settings-panel.visible { display: block; }
-
-  .settings-panel h2 {
-    font-size: 0.85rem;
+  .accordion-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: transparent;
+    border: none;
+    color: var(--ui-text);
+    font-size: 0.8rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: #888;
-    margin-bottom: 16px;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    transition: color 0.2s;
   }
 
-  .settings-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 16px;
+  .accordion-header:hover { color: var(--center-color); }
+
+  .accordion-header .chevron {
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+    color: var(--ui-faint);
   }
 
-  .setting-item {
+  .accordion-section.expanded .accordion-header .chevron {
+    transform: rotate(180deg);
+  }
+
+  .accordion-body {
+    display: none;
+    padding: 4px 14px 16px;
+  }
+
+  .accordion-section.expanded .accordion-body {
+    display: block;
+  }
+
+  /* Settings items inside accordion */
+  .s-grid {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 14px;
   }
 
-  .setting-item label {
-    font-size: 0.8rem;
-    color: #888;
+  .s-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .s-item label {
+    font-size: 0.72rem;
+    color: var(--ui-muted);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
   }
 
-  .setting-item input[type="color"] {
+  .s-item input[type="color"] {
     width: 100%;
-    height: 36px;
+    height: 32px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
     background: var(--bg-color);
@@ -414,61 +697,249 @@
     padding: 2px;
   }
 
-  .setting-item input[type="range"] {
+  .s-item input[type="range"] {
     width: 100%;
     accent-color: var(--center-color);
   }
 
-  .setting-item select, .setting-item input[type="number"] {
+  .s-item select {
     background: var(--bg-color);
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    color: #ccc;
+    color: var(--ui-text);
     padding: 6px 8px;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
 
-  .setting-value {
-    font-size: 0.75rem;
-    color: #666;
-    text-align: right;
+  .s-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
 
-  /* --- Scrollbar --- */
+  .s-val {
+    font-size: 0.7rem;
+    color: var(--ui-faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Toggle switch */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 0;
+  }
+
+  .toggle-row label {
+    font-size: 0.72rem;
+    color: var(--ui-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .toggle-switch {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--border-color);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border: none;
+    flex-shrink: 0;
+  }
+
+  .toggle-switch:checked {
+    background: var(--center-color);
+  }
+
+  .toggle-switch::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+
+  .toggle-switch:checked::before {
+    transform: translateX(16px);
+  }
+
+  /* ===== Scrollbar ===== */
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: var(--bg-color); }
   ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
 
-  /* --- Loading indicator --- */
-  .loading {
-    display: none;
-    text-align: center;
-    padding: 20px;
-    color: #888;
-  }
-
+  /* ===== Loading ===== */
+  .loading { display: none; text-align: center; padding: 20px; color: var(--ui-muted); }
   .loading.visible { display: block; }
-
   .loading .spinner {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 2px solid var(--border-color);
-    border-top-color: var(--center-color);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin-right: 8px;
-    vertical-align: middle;
+    display: inline-block; width: 20px; height: 20px;
+    border: 2px solid var(--border-color); border-top-color: var(--center-color);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+    margin-right: 8px; vertical-align: middle;
   }
-
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ===== Keyboard hint ===== */
+  .kbd-hint {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--ui-faint);
+    margin-top: 4px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .reader-section.visible .kbd-hint { opacity: 1; }
+  kbd {
+    display: inline-block;
+    padding: 1px 5px;
+    font-size: 0.65rem;
+    font-family: inherit;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    background: var(--bg-color);
+    color: var(--ui-muted);
+  }
 </style>
 </head>
 <body>
 
-<header>
+<!-- ===== Top Bar ===== -->
+<div class="top-bar">
   <h1>SpeedRead</h1>
-</header>
+  <div class="top-bar-actions">
+    <button class="top-btn" id="btn-new-text" style="display:none;" title="Load different text">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      New Text
+    </button>
+    <div class="theme-picker">
+      <button class="top-btn icon-only" id="btn-theme" title="Change theme">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+      <div class="theme-menu" id="theme-menu">
+        <button data-theme="dark" class="active"><span class="swatch" style="background:#1e1e2e;"></span> Dark</button>
+        <button data-theme="light"><span class="swatch" style="background:#f5f2eb;"></span> Light</button>
+        <button data-theme="sepia"><span class="swatch" style="background:#f4ecd8;"></span> Sepia</button>
+        <button data-theme="highcontrast"><span class="swatch" style="background:#000;"></span> High Contrast</button>
+      </div>
+    </div>
+    <button class="top-btn icon-only" id="btn-settings" style="display:none;" title="Settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ===== Settings Drawer ===== -->
+<div class="settings-overlay" id="settings-overlay"></div>
+<div class="settings-drawer" id="settings-drawer">
+  <div class="drawer-header">
+    <h2>Settings</h2>
+    <button class="drawer-close" id="drawer-close">&times;</button>
+  </div>
+
+  <!-- Reader section -->
+  <div class="accordion-section expanded">
+    <button class="accordion-header">Reader <span class="chevron">&#9660;</span></button>
+    <div class="accordion-body">
+      <div class="s-grid">
+        <div class="s-item">
+          <label>Font Family</label>
+          <select id="set-font">
+            <option value="'Courier New', monospace">Courier New</option>
+            <option value="'Georgia', serif">Georgia</option>
+            <option value="'Verdana', sans-serif">Verdana</option>
+            <option value="'Arial', sans-serif">Arial</option>
+            <option value="'Times New Roman', serif">Times New Roman</option>
+            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+            <option value="'Consolas', monospace">Consolas</option>
+            <option value="'Palatino', serif">Palatino</option>
+          </select>
+        </div>
+        <div class="s-item">
+          <div class="s-row"><label>Font Size</label><span class="s-val" id="font-size-value">3rem</span></div>
+          <input type="range" id="set-font-size" min="1.5" max="6" step="0.25" value="3">
+        </div>
+        <div class="s-item">
+          <div class="s-row"><label>Letter Spacing</label><span class="s-val" id="spacing-value">0.05em</span></div>
+          <input type="range" id="set-spacing" min="0" max="0.5" step="0.01" value="0.05">
+        </div>
+        <div class="s-item">
+          <div class="s-row"><label>Context Words</label><span class="s-val" id="context-words-value">0</span></div>
+          <input type="range" id="set-context-words" min="0" max="5" step="1" value="0">
+        </div>
+        <div class="s-item">
+          <label>Center Letter Color</label>
+          <input type="color" id="set-center-color" value="#ff00ff">
+        </div>
+        <div class="s-item">
+          <label>Word Color</label>
+          <input type="color" id="set-text-color" value="#a0a0a0">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Text Panel section -->
+  <div class="accordion-section">
+    <button class="accordion-header">Text Panel <span class="chevron">&#9660;</span></button>
+    <div class="accordion-body">
+      <div class="s-grid">
+        <div class="s-item">
+          <label>Layout</label>
+          <select id="set-layout">
+            <option value="sentence" selected>One sentence per line</option>
+            <option value="continuous">Continuous</option>
+          </select>
+        </div>
+        <div class="toggle-row" id="bullet-item">
+          <label>Bullet Points</label>
+          <input type="checkbox" class="toggle-switch" id="set-bullets">
+        </div>
+        <div class="toggle-row" id="clause-break-item">
+          <label>Clause Breaks</label>
+          <input type="checkbox" class="toggle-switch" id="set-clause-breaks">
+        </div>
+        <div class="s-item">
+          <div class="s-row"><label>Word Spacing</label><span class="s-val" id="word-spacing-value">0.1em</span></div>
+          <input type="range" id="set-word-spacing" min="0" max="1" step="0.05" value="0.1">
+        </div>
+        <div class="s-item">
+          <div class="s-row"><label>Line Height</label><span class="s-val" id="line-height-value">2</span></div>
+          <input type="range" id="set-line-height" min="1" max="4" step="0.1" value="2">
+        </div>
+        <div class="s-item" id="sentence-gap-item">
+          <div class="s-row"><label>Sentence Gap</label><span class="s-val" id="sentence-gap-value">0.6em</span></div>
+          <input type="range" id="set-sentence-gap" min="0" max="2" step="0.1" value="0.6">
+        </div>
+        <div class="s-item" id="clause-gap-item" style="display:none;">
+          <div class="s-row"><label>Clause Gap</label><span class="s-val" id="clause-gap-value">0.2em</span></div>
+          <input type="range" id="set-clause-gap" min="0" max="1.5" step="0.05" value="0.2">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Theme section -->
+  <div class="accordion-section">
+    <button class="accordion-header">Colors <span class="chevron">&#9660;</span></button>
+    <div class="accordion-body">
+      <div class="s-grid">
+        <div class="s-item">
+          <label>Background Color</label>
+          <input type="color" id="set-bg-color" value="#1e1e2e">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="app-container">
 
@@ -486,108 +957,11 @@
     <div id="file-tab" class="tab-content">
       <div class="drop-zone" id="drop-zone">
         <p>Drop a file here or click to browse</p>
-        <p style="font-size:0.8rem; margin-top:8px; color:#666;">Supports: PDF, DOCX, TXT</p>
+        <p style="font-size:0.8rem; margin-top:8px; color:var(--ui-faint);">Supports: PDF, DOCX, TXT</p>
         <input type="file" id="file-input" accept=".pdf,.docx,.txt,.text,.md">
       </div>
       <div class="loading" id="file-loading">
         <span class="spinner"></span> Processing file...
-      </div>
-    </div>
-  </div>
-
-  <!-- Settings -->
-  <button class="settings-toggle" id="settings-toggle" style="display:none;">Settings</button>
-  <div class="settings-panel" id="settings-panel">
-    <h2>Settings</h2>
-    <div class="settings-grid">
-      <div class="setting-item">
-        <label>Center Letter Color</label>
-        <input type="color" id="set-center-color" value="#ff00ff">
-      </div>
-      <div class="setting-item">
-        <label>Word Color</label>
-        <input type="color" id="set-text-color" value="#a0a0a0">
-      </div>
-      <div class="setting-item">
-        <label>Background Color</label>
-        <input type="color" id="set-bg-color" value="#1e1e2e">
-      </div>
-      <div class="setting-item">
-        <label>Font Family</label>
-        <select id="set-font">
-          <option value="'Courier New', monospace">Courier New</option>
-          <option value="'Georgia', serif">Georgia</option>
-          <option value="'Verdana', sans-serif">Verdana</option>
-          <option value="'Arial', sans-serif">Arial</option>
-          <option value="'Times New Roman', serif">Times New Roman</option>
-          <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
-          <option value="'Consolas', monospace">Consolas</option>
-          <option value="'Palatino', serif">Palatino</option>
-        </select>
-      </div>
-      <div class="setting-item">
-        <label>Letter Spacing</label>
-        <input type="range" id="set-spacing" min="0" max="0.5" step="0.01" value="0.05">
-        <span class="setting-value" id="spacing-value">0.05em</span>
-      </div>
-      <div class="setting-item">
-        <label>Speed (WPM)</label>
-        <input type="number" id="set-wpm" min="50" max="1500" step="25" value="300">
-      </div>
-      <div class="setting-item">
-        <label>Font Size</label>
-        <input type="range" id="set-font-size" min="1.5" max="6" step="0.25" value="3">
-        <span class="setting-value" id="font-size-value">3rem</span>
-      </div>
-      <div class="setting-item">
-        <label>Context Words</label>
-        <input type="range" id="set-context-words" min="0" max="5" step="1" value="0">
-        <span class="setting-value" id="context-words-value">0</span>
-      </div>
-    </div>
-
-    <h2 style="margin-top:20px;">Text Body Display</h2>
-    <div class="settings-grid">
-      <div class="setting-item">
-        <label>Layout</label>
-        <select id="set-layout">
-          <option value="sentence" selected>One sentence per line</option>
-          <option value="continuous">Continuous</option>
-        </select>
-      </div>
-      <div class="setting-item">
-        <label>Word Spacing</label>
-        <input type="range" id="set-word-spacing" min="0" max="1" step="0.05" value="0.1">
-        <span class="setting-value" id="word-spacing-value">0.1em</span>
-      </div>
-      <div class="setting-item">
-        <label>Line Height</label>
-        <input type="range" id="set-line-height" min="1" max="4" step="0.1" value="2">
-        <span class="setting-value" id="line-height-value">2</span>
-      </div>
-      <div class="setting-item" id="sentence-gap-item">
-        <label>Sentence Gap</label>
-        <input type="range" id="set-sentence-gap" min="0" max="2" step="0.1" value="0.6">
-        <span class="setting-value" id="sentence-gap-value">0.6em</span>
-      </div>
-      <div class="setting-item" id="bullet-item">
-        <label>Bullet Points</label>
-        <select id="set-bullets">
-          <option value="off">Off</option>
-          <option value="on">Each sentence</option>
-        </select>
-      </div>
-      <div class="setting-item" id="clause-break-item">
-        <label>Clause Breaks</label>
-        <select id="set-clause-breaks">
-          <option value="off">Off</option>
-          <option value="on">New line after clauses</option>
-        </select>
-      </div>
-      <div class="setting-item" id="clause-gap-item" style="display:none;">
-        <label>Clause Gap</label>
-        <input type="range" id="set-clause-gap" min="0" max="1.5" step="0.05" value="0.2">
-        <span class="setting-value" id="clause-gap-value">0.2em</span>
       </div>
     </div>
   </div>
@@ -600,15 +974,27 @@
         <span class="wd-left"><span class="ctx-left"></span><span class="before"></span></span><span class="wd-center"></span><span class="wd-right"><span class="after"></span><span class="ctx-right"></span></span>
       </div>
     </div>
-    <div class="controls-bar">
-      <button id="btn-restart" title="Restart">&#8634;</button>
-      <button id="btn-back" title="Back 10 words">&#9664;&#9664;</button>
-      <button id="btn-play" title="Play / Pause">&#9654;</button>
-      <button id="btn-forward" title="Forward 10 words">&#9654;&#9654;</button>
-      <span class="speed-display" id="speed-display">300 WPM</span>
+    <div class="transport">
+      <div class="transport-buttons">
+        <button id="btn-restart" title="Restart">&#8634;</button>
+        <button id="btn-back" title="Back 10 words">&#9664;&#9664;</button>
+        <button id="btn-play" title="Play / Pause">&#9654;</button>
+        <button id="btn-forward" title="Forward 10 words">&#9654;&#9654;</button>
+      </div>
+      <div class="speed-row">
+        <label>Speed</label>
+        <input type="range" id="speed-slider" min="50" max="1200" step="25" value="300">
+        <span class="speed-val" id="speed-display">300 WPM</span>
+      </div>
+      <div class="progress-row">
+        <div class="progress-bar" id="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <span class="word-counter" id="word-counter">0 / 0</span>
+      </div>
     </div>
-    <div class="progress-bar" id="progress-bar">
-      <div class="progress-fill" id="progress-fill"></div>
+    <div class="kbd-hint">
+      <kbd>Space</kbd> play/pause &nbsp; <kbd>&larr;</kbd><kbd>&rarr;</kbd> word &nbsp; <kbd>&uarr;</kbd><kbd>&darr;</kbd> speed
     </div>
   </div>
 
@@ -629,7 +1015,7 @@
 (function() {
   'use strict';
 
-  // --- State ---
+  // ===== State =====
   let words = [];
   let wordIndex = 0;
   let playing = false;
@@ -641,21 +1027,74 @@
   let showClauseBreaks = false;
   let contextWords = 0;
 
-  // --- DOM refs ---
+  // ===== DOM refs =====
   const inputSection = document.getElementById('input-section');
   const readerSection = document.getElementById('reader-section');
   const textBodySection = document.getElementById('text-body-section');
-  const settingsToggle = document.getElementById('settings-toggle');
-  const settingsPanel = document.getElementById('settings-panel');
   const wordDisplay = document.getElementById('word-display');
   const textBody = document.getElementById('text-body');
   const progressFill = document.getElementById('progress-fill');
   const speedDisplay = document.getElementById('speed-display');
-  const focusLine = document.getElementById('focus-line');
   const readerFrame = document.getElementById('reader-frame');
   const fileLoading = document.getElementById('file-loading');
+  const wordCounter = document.getElementById('word-counter');
+  const speedSlider = document.getElementById('speed-slider');
 
-  // --- Input tabs ---
+  // ===== Theme =====
+  const themeMenu = document.getElementById('theme-menu');
+
+  document.getElementById('btn-theme').addEventListener('click', e => {
+    e.stopPropagation();
+    themeMenu.classList.toggle('open');
+  });
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.theme-picker')) themeMenu.classList.remove('open');
+  });
+
+  themeMenu.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const theme = btn.dataset.theme;
+      document.documentElement.setAttribute('data-theme', theme);
+      themeMenu.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      themeMenu.classList.remove('open');
+      // Update color pickers to match theme
+      const cs = getComputedStyle(document.documentElement);
+      document.getElementById('set-bg-color').value = rgbToHex(cs.getPropertyValue('--bg-color').trim());
+      document.getElementById('set-center-color').value = rgbToHex(cs.getPropertyValue('--center-color').trim());
+      document.getElementById('set-text-color').value = rgbToHex(cs.getPropertyValue('--text-color').trim());
+    });
+  });
+
+  function rgbToHex(str) {
+    if (str.startsWith('#')) return str.length === 4
+      ? '#' + str[1]+str[1]+str[2]+str[2]+str[3]+str[3]
+      : str;
+    const m = str.match(/\d+/g);
+    if (!m) return str;
+    return '#' + m.slice(0,3).map(n => parseInt(n).toString(16).padStart(2,'0')).join('');
+  }
+
+  // ===== Settings drawer =====
+  const drawer = document.getElementById('settings-drawer');
+  const overlay = document.getElementById('settings-overlay');
+
+  function openDrawer() { drawer.classList.add('open'); overlay.classList.add('open'); }
+  function closeDrawer() { drawer.classList.remove('open'); overlay.classList.remove('open'); }
+
+  document.getElementById('btn-settings').addEventListener('click', openDrawer);
+  document.getElementById('drawer-close').addEventListener('click', closeDrawer);
+  overlay.addEventListener('click', closeDrawer);
+
+  // Accordion
+  document.querySelectorAll('.accordion-header').forEach(hdr => {
+    hdr.addEventListener('click', () => {
+      hdr.parentElement.classList.toggle('expanded');
+    });
+  });
+
+  // ===== Input tabs =====
   document.querySelectorAll('.input-tabs button').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.input-tabs button').forEach(b => b.classList.remove('active'));
@@ -665,13 +1104,25 @@
     });
   });
 
-  // --- Load pasted text ---
+  // ===== Load pasted text =====
   document.getElementById('load-paste-btn').addEventListener('click', () => {
     const text = document.getElementById('paste-area').value.trim();
     if (text) loadText(text);
   });
 
-  // --- File upload ---
+  // ===== New text button =====
+  document.getElementById('btn-new-text').addEventListener('click', () => {
+    pause();
+    words = [];
+    wordIndex = 0;
+    readerSection.classList.remove('visible');
+    textBodySection.classList.remove('visible');
+    document.getElementById('btn-new-text').style.display = 'none';
+    document.getElementById('btn-settings').style.display = 'none';
+    inputSection.style.display = '';
+  });
+
+  // ===== File upload =====
   const dropZone = document.getElementById('drop-zone');
   const fileInput = document.getElementById('file-input');
 
@@ -690,7 +1141,6 @@
   async function handleFile(file) {
     const ext = file.name.split('.').pop().toLowerCase();
     fileLoading.classList.add('visible');
-
     try {
       let text = '';
       if (ext === 'txt' || ext === 'text' || ext === 'md') {
@@ -733,7 +1183,7 @@
     return result.value;
   }
 
-  // --- Load text into reader ---
+  // ===== Load text into reader =====
   function loadText(text) {
     rawText = text;
     words = text.split(/\s+/).filter(w => w.length > 0);
@@ -745,26 +1195,22 @@
 
     buildTextBody();
 
-    // Show reader sections
     readerSection.classList.add('visible');
     textBodySection.classList.add('visible');
-    settingsToggle.style.display = 'inline-block';
-
-    // Collapse input
+    document.getElementById('btn-new-text').style.display = '';
+    document.getElementById('btn-settings').style.display = '';
     inputSection.style.display = 'none';
 
     displayWord(0);
     updateProgress();
     updateBtnState();
-    positionFocusLine();
   }
 
-  // Detect if a word ends a sentence
+  // ===== Text body building =====
   function isSentenceEnd(w) {
     return /[.!?]["'\u201D\u2019)]*$/.test(w);
   }
 
-  // Detect if a word ends a clause (comma, semicolon, colon, or conjunctions "and"/"or" as next word)
   function isClauseEnd(w, nextWord) {
     if (/[,;:]$/.test(w)) return true;
     if (nextWord && /^(and|or|but|yet|nor|so|because|although|however|therefore|moreover|furthermore|whereas|while)$/i.test(nextWord)) return true;
@@ -776,9 +1222,8 @@
     textBody.innerHTML = '';
 
     const useSentenceBreaks = layoutMode === 'sentence';
-    let sentenceContainer = null; // used when bullets are on
+    let sentenceContainer = null;
 
-    // Start a new bullet/sentence container
     function startSentence() {
       if (showBullets && useSentenceBreaks) {
         sentenceContainer = document.createElement('span');
@@ -789,9 +1234,7 @@
       }
     }
 
-    function getParent() {
-      return sentenceContainer || textBody;
-    }
+    function getParent() { return sentenceContainer || textBody; }
 
     if (showBullets && useSentenceBreaks) startSentence();
 
@@ -810,9 +1253,7 @@
 
       if (!isLast) {
         if (useSentenceBreaks && sentEnd) {
-          // Sentence break
           if (showBullets) {
-            // Close current bullet, start a new one
             startSentence();
           } else {
             const br = document.createElement('span');
@@ -820,7 +1261,6 @@
             getParent().appendChild(br);
           }
         } else if (clauseEnd) {
-          // Clause break (new line, smaller gap)
           const br = document.createElement('span');
           br.className = 'clause-break';
           getParent().appendChild(br);
@@ -830,13 +1270,12 @@
       }
     });
 
-    // Re-apply highlight if we had a position
     if (savedIndex > 0 && savedIndex < words.length) {
       highlightTextBody(savedIndex);
     }
   }
 
-  // --- Spritz-style ORP (Optimal Recognition Point) ---
+  // ===== Spritz ORP =====
   function getORP(word) {
     const len = word.length;
     if (len <= 1) return 0;
@@ -853,61 +1292,36 @@
     const word = words[index];
     const orp = getORP(word);
 
-    const before = word.slice(0, orp);
-    const center = word[orp];
-    const after = word.slice(orp + 1);
+    wordDisplay.querySelector('.before').textContent = word.slice(0, orp);
+    wordDisplay.querySelector('.wd-center').textContent = word[orp];
+    wordDisplay.querySelector('.after').textContent = word.slice(orp + 1);
 
-    wordDisplay.querySelector('.before').textContent = before;
-    wordDisplay.querySelector('.wd-center').textContent = center;
-    wordDisplay.querySelector('.after').textContent = after;
-
-    // Context words
     const ctxLeft = wordDisplay.querySelector('.ctx-left');
     const ctxRight = wordDisplay.querySelector('.ctx-right');
     ctxLeft.innerHTML = '';
     ctxRight.innerHTML = '';
 
     if (contextWords > 0) {
-      // Left context
       const leftWords = [];
-      for (let j = Math.max(0, index - contextWords); j < index; j++) {
-        leftWords.push(words[j]);
-      }
+      for (let j = Math.max(0, index - contextWords); j < index; j++) leftWords.push(words[j]);
       if (leftWords.length > 0) {
-        const span = document.createElement('span');
-        span.className = 'ctx';
-        span.textContent = leftWords.join(' ');
-        ctxLeft.appendChild(span);
-        const sep = document.createElement('span');
-        sep.className = 'ctx-sep';
-        sep.textContent = '  ';
+        const s = document.createElement('span'); s.className = 'ctx'; s.textContent = leftWords.join(' ');
+        ctxLeft.appendChild(s);
+        const sep = document.createElement('span'); sep.className = 'ctx-sep'; sep.textContent = '  ';
         ctxLeft.appendChild(sep);
       }
-
-      // Right context
       const rightWords = [];
-      for (let j = index + 1; j <= Math.min(words.length - 1, index + contextWords); j++) {
-        rightWords.push(words[j]);
-      }
+      for (let j = index + 1; j <= Math.min(words.length - 1, index + contextWords); j++) rightWords.push(words[j]);
       if (rightWords.length > 0) {
-        const sep = document.createElement('span');
-        sep.className = 'ctx-sep';
-        sep.textContent = '  ';
+        const sep = document.createElement('span'); sep.className = 'ctx-sep'; sep.textContent = '  ';
         ctxRight.appendChild(sep);
-        const span = document.createElement('span');
-        span.className = 'ctx';
-        span.textContent = rightWords.join(' ');
-        ctxRight.appendChild(span);
+        const s = document.createElement('span'); s.className = 'ctx'; s.textContent = rightWords.join(' ');
+        ctxRight.appendChild(s);
       }
     }
 
     highlightTextBody(index);
     updateProgress();
-    positionFocusLine();
-  }
-
-  function positionFocusLine() {
-    // Focus line is now fixed at 50% via CSS — no JS positioning needed
   }
 
   function highlightTextBody(index) {
@@ -919,24 +1333,23 @@
       else if (i < index) span.classList.add('read-word');
     });
 
-    // Scroll current word into view
     const currentSpan = textBody.querySelector('.current-word');
     if (currentSpan) {
       const container = textBody;
       const spanTop = currentSpan.offsetTop - container.offsetTop;
       const spanHeight = currentSpan.offsetHeight;
       const containerHeight = container.clientHeight;
-      const scrollTarget = spanTop - containerHeight / 2 + spanHeight / 2;
-      container.scrollTop = scrollTarget;
+      container.scrollTop = spanTop - containerHeight / 2 + spanHeight / 2;
     }
   }
 
   function updateProgress() {
     const pct = words.length > 0 ? (wordIndex / (words.length - 1)) * 100 : 0;
     progressFill.style.width = pct + '%';
+    wordCounter.textContent = (wordIndex + 1).toLocaleString() + ' / ' + words.length.toLocaleString();
   }
 
-  // --- Playback controls ---
+  // ===== Playback =====
   function play() {
     if (words.length === 0) return;
     if (wordIndex >= words.length - 1) wordIndex = 0;
@@ -954,7 +1367,6 @@
   function scheduleNext() {
     if (!playing) return;
     const word = words[wordIndex];
-    // Longer pauses for punctuation
     let delay = 60000 / wpm;
     if (word && /[.!?]$/.test(word)) delay *= 2.5;
     else if (word && /[,;:]$/.test(word)) delay *= 1.5;
@@ -965,17 +1377,13 @@
         displayWord(wordIndex);
         scheduleNext();
       } else {
-        // End of text
         playing = false;
         updateBtnState();
       }
     }, delay);
   }
 
-  function togglePlay() {
-    if (playing) pause();
-    else play();
-  }
+  function togglePlay() { if (playing) pause(); else play(); }
 
   function jumpToWord(index) {
     const wasPlaying = playing;
@@ -1002,16 +1410,21 @@
   document.getElementById('btn-back').addEventListener('click', () => jumpToWord(wordIndex - 10));
   document.getElementById('btn-forward').addEventListener('click', () => jumpToWord(wordIndex + 10));
 
-  // Progress bar click to seek
   document.getElementById('progress-bar').addEventListener('click', e => {
     const rect = e.currentTarget.getBoundingClientRect();
     const pct = (e.clientX - rect.left) / rect.width;
     jumpToWord(Math.round(pct * (words.length - 1)));
   });
 
-  // Keyboard shortcuts
+  // ===== Speed slider =====
+  speedSlider.addEventListener('input', e => {
+    wpm = parseInt(e.target.value);
+    speedDisplay.textContent = wpm + ' WPM';
+  });
+
+  // ===== Keyboard shortcuts =====
   document.addEventListener('keydown', e => {
-    if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+    if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
     if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
     if (e.code === 'ArrowLeft') { e.preventDefault(); jumpToWord(wordIndex - 1); }
     if (e.code === 'ArrowRight') { e.preventDefault(); jumpToWord(wordIndex + 1); }
@@ -1020,52 +1433,29 @@
   });
 
   function changeWPM(delta) {
-    wpm = Math.max(50, Math.min(1500, wpm + delta));
-    document.getElementById('set-wpm').value = wpm;
+    wpm = Math.max(50, Math.min(1200, wpm + delta));
+    speedSlider.value = wpm;
     speedDisplay.textContent = wpm + ' WPM';
   }
 
-  // --- Settings ---
-  settingsToggle.addEventListener('click', () => {
-    settingsPanel.classList.toggle('visible');
-  });
-
+  // ===== Settings wiring =====
   function applyCSS(prop, value) {
     document.documentElement.style.setProperty(prop, value);
   }
 
-  document.getElementById('set-center-color').addEventListener('input', e => {
-    applyCSS('--center-color', e.target.value);
-  });
-
-  document.getElementById('set-text-color').addEventListener('input', e => {
-    applyCSS('--text-color', e.target.value);
-  });
-
-  document.getElementById('set-bg-color').addEventListener('input', e => {
-    applyCSS('--bg-color', e.target.value);
-  });
-
-  document.getElementById('set-font').addEventListener('change', e => {
-    applyCSS('--font-family', e.target.value);
-  });
+  document.getElementById('set-center-color').addEventListener('input', e => applyCSS('--center-color', e.target.value));
+  document.getElementById('set-text-color').addEventListener('input', e => applyCSS('--text-color', e.target.value));
+  document.getElementById('set-bg-color').addEventListener('input', e => applyCSS('--bg-color', e.target.value));
+  document.getElementById('set-font').addEventListener('change', e => applyCSS('--font-family', e.target.value));
 
   document.getElementById('set-spacing').addEventListener('input', e => {
     applyCSS('--letter-spacing', e.target.value + 'em');
     document.getElementById('spacing-value').textContent = e.target.value + 'em';
-    positionFocusLine();
-  });
-
-  document.getElementById('set-wpm').addEventListener('change', e => {
-    wpm = Math.max(50, Math.min(1500, parseInt(e.target.value) || 300));
-    e.target.value = wpm;
-    speedDisplay.textContent = wpm + ' WPM';
   });
 
   document.getElementById('set-font-size').addEventListener('input', e => {
     wordDisplay.style.fontSize = e.target.value + 'rem';
     document.getElementById('font-size-value').textContent = e.target.value + 'rem';
-    positionFocusLine();
   });
 
   document.getElementById('set-context-words').addEventListener('input', e => {
@@ -1074,12 +1464,12 @@
     if (words.length > 0) displayWord(wordIndex);
   });
 
-  // --- Text body display settings ---
+  // Text panel settings
   function updateTextBodySettingsVisibility() {
     const isSentence = layoutMode === 'sentence';
-    document.getElementById('sentence-gap-item').style.display = isSentence ? 'flex' : 'none';
-    document.getElementById('bullet-item').style.display = isSentence ? 'flex' : 'none';
-    document.getElementById('clause-gap-item').style.display = showClauseBreaks ? 'flex' : 'none';
+    document.getElementById('sentence-gap-item').style.display = isSentence ? '' : 'none';
+    document.getElementById('bullet-item').style.display = isSentence ? '' : 'none';
+    document.getElementById('clause-gap-item').style.display = showClauseBreaks ? '' : 'none';
   }
 
   document.getElementById('set-layout').addEventListener('change', e => {
@@ -1089,12 +1479,12 @@
   });
 
   document.getElementById('set-bullets').addEventListener('change', e => {
-    showBullets = e.target.value === 'on';
+    showBullets = e.target.checked;
     if (words.length > 0) buildTextBody();
   });
 
   document.getElementById('set-clause-breaks').addEventListener('change', e => {
-    showClauseBreaks = e.target.value === 'on';
+    showClauseBreaks = e.target.checked;
     updateTextBodySettingsVisibility();
     if (words.length > 0) buildTextBody();
   });
@@ -1118,9 +1508,6 @@
     applyCSS('--tb-clause-gap', e.target.value + 'em');
     document.getElementById('clause-gap-value').textContent = e.target.value + 'em';
   });
-
-  // Reposition focus line on resize
-  window.addEventListener('resize', positionFocusLine);
 
 })();
 </script>
