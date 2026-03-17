@@ -67,6 +67,7 @@
     --tb-word-spacing: 0.1em;
     --tb-sentence-gap: 0.6em;
     --tb-clause-gap: 0.2em;
+    --tb-max-width: 100%;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -227,6 +228,7 @@
     font-family: var(--font-family); font-size: 3rem; letter-spacing: var(--letter-spacing);
     white-space: pre; position: relative; display: flex; align-items: center;
     justify-content: center; min-height: 1.2em;
+    font-variant-ligatures: none; font-feature-settings: "liga" 0;
   }
   #word-display .wd-left { display: flex; justify-content: flex-end; flex: 1; overflow: hidden; }
   #word-display .wd-center { flex-shrink: 0; color: var(--center-color); }
@@ -290,6 +292,8 @@
     max-height: 280px; overflow-y: auto; font-size: 0.9rem;
     line-height: var(--tb-line-height, 2); word-spacing: var(--tb-word-spacing, 0.1em);
     color: var(--body-text-color); padding: 8px; scroll-behavior: smooth;
+    text-align: left; font-variant-ligatures: none; font-feature-settings: "liga" 0;
+    max-width: var(--tb-max-width, 100%); margin: 0 auto;
   }
   #text-body span { transition: color 0.15s; }
   #text-body span.current-word { color: var(--center-color); font-weight: 600; }
@@ -478,15 +482,15 @@
 <div class="top-bar">
   <h1>flowread</h1>
   <div class="top-bar-actions">
-    <button class="top-btn" id="btn-new-text" style="display:none;" title="Load different text">
-      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    <button class="top-btn" id="btn-new-text" style="display:none;" title="Load different text" aria-label="Load new text">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       New
     </button>
-    <button class="top-btn icon-only" id="btn-focus" style="display:none;" title="Focus mode (F)">
-      <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+    <button class="top-btn icon-only" id="btn-focus" style="display:none;" title="Focus mode (F)" aria-label="Toggle focus mode">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
     </button>
-    <button class="top-btn icon-only" id="btn-tts" style="display:none;" title="Text-to-speech">
-      <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+    <button class="top-btn icon-only" id="btn-tts" style="display:none;" title="Text-to-speech" aria-label="Toggle text to speech">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
     </button>
     <div class="theme-picker">
       <button class="top-btn icon-only" id="btn-theme" title="Theme">
@@ -523,6 +527,7 @@
           <option value="'Georgia', serif">Georgia</option>
           <option value="'Verdana', sans-serif">Verdana</option>
           <option value="'Arial', sans-serif" selected>Arial</option>
+          <option value="'Calibri', sans-serif">Calibri</option>
           <option value="'Times New Roman', serif">Times New Roman</option>
           <option value="'Consolas', monospace">Consolas</option>
           <option value="'Palatino', serif">Palatino</option>
@@ -567,6 +572,26 @@
     <button class="accordion-header">Colors <span class="chevron">&#9660;</span></button>
     <div class="accordion-body"><div class="s-grid">
       <div class="s-item"><label>Background Color</label><input type="color" id="set-bg-color" value="#1e1e2e"></div>
+      <div class="s-item"><label>Tinted Background Presets</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+          <button class="tint-btn" data-bg="#fef9ef" data-text="#333333" title="Cream" style="background:#fef9ef;border:1px solid #ccc;border-radius:4px;width:32px;height:32px;cursor:pointer;"></button>
+          <button class="tint-btn" data-bg="#fdebd0" data-text="#333333" title="Peach" style="background:#fdebd0;border:1px solid #ccc;border-radius:4px;width:32px;height:32px;cursor:pointer;"></button>
+          <button class="tint-btn" data-bg="#fefde7" data-text="#333333" title="Pale Yellow" style="background:#fefde7;border:1px solid #ccc;border-radius:4px;width:32px;height:32px;cursor:pointer;"></button>
+          <button class="tint-btn" data-bg="#e8f4fd" data-text="#333333" title="Pale Blue" style="background:#e8f4fd;border:1px solid #ccc;border-radius:4px;width:32px;height:32px;cursor:pointer;"></button>
+          <button class="tint-btn" data-bg="#eaf4ea" data-text="#333333" title="Pale Green" style="background:#eaf4ea;border:1px solid #ccc;border-radius:4px;width:32px;height:32px;cursor:pointer;"></button>
+        </div>
+        <p style="font-size:0.7rem;color:var(--ui-faint);margin-top:6px;">Tinted backgrounds can reduce visual stress. Also adjusts text colour.</p>
+      </div>
+    </div></div>
+  </div>
+  <!-- Text Panel (cont) -->
+  <div class="accordion-section">
+    <button class="accordion-header">Line Length <span class="chevron">&#9660;</span></button>
+    <div class="accordion-body"><div class="s-grid">
+      <div class="s-item"><div class="s-row"><label>Max Line Width</label><span class="s-val" id="line-width-value">100%</span></div>
+        <input type="range" id="set-line-width" min="30" max="100" step="5" value="100">
+        <p style="font-size:0.7rem;color:var(--ui-faint);margin-top:4px;">Guidelines recommend 50–75 characters per line. Try 60–70% for shorter lines.</p>
+      </div>
     </div></div>
   </div>
   <!-- Presets -->
@@ -642,11 +667,11 @@
     </div>
     <div class="transport">
       <div class="transport-buttons">
-        <button id="btn-restart" title="Restart">&#8634;</button>
-        <button id="btn-back" title="Back 10 words">&#9664;&#9664;</button>
-        <button id="btn-play" title="Play / Pause">&#9654;</button>
-        <button id="btn-forward" title="Forward 10 words">&#9654;&#9654;</button>
-        <button id="btn-highlight" title="Highlight current word" style="font-size:0.8rem;">&#9733;</button>
+        <button id="btn-restart" title="Restart" aria-label="Restart">&#8634;</button>
+        <button id="btn-back" title="Back 10 words" aria-label="Back 10 words">&#9664;&#9664;</button>
+        <button id="btn-play" title="Play / Pause" aria-label="Play or pause">&#9654;</button>
+        <button id="btn-forward" title="Forward 10 words" aria-label="Forward 10 words">&#9654;&#9654;</button>
+        <button id="btn-highlight" title="Highlight current word" aria-label="Highlight current word" style="font-size:0.8rem;">&#9733;</button>
       </div>
       <div class="speed-row">
         <label>Speed</label>
@@ -1412,6 +1437,25 @@
   document.getElementById('set-sentence-gap').addEventListener('input', e => { applyCSS('--tb-sentence-gap',e.target.value+'em'); document.getElementById('sentence-gap-value').textContent=e.target.value+'em'; });
   document.getElementById('set-clause-gap').addEventListener('input', e => { applyCSS('--tb-clause-gap',e.target.value+'em'); document.getElementById('clause-gap-value').textContent=e.target.value+'em'; });
 
+  // Line width
+  document.getElementById('set-line-width').addEventListener('input', e => {
+    applyCSS('--tb-max-width', e.target.value + '%');
+    document.getElementById('line-width-value').textContent = e.target.value + '%';
+  });
+
+  // Tinted background presets
+  document.querySelectorAll('.tint-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const bg = btn.dataset.bg;
+      const text = btn.dataset.text;
+      applyCSS('--bg-color', bg);
+      applyCSS('--text-color', text);
+      applyCSS('--body-text-color', text);
+      applyCSS('--panel-bg', bg);
+      document.getElementById('set-bg-color').value = bg;
+    });
+  });
+
   // ===== Presets =====
   function getConfig() {
     return {
@@ -1421,6 +1465,7 @@
       spacing: document.getElementById('set-spacing').value,
       wordSpacing: document.getElementById('set-word-spacing').value,
       lineHeight: document.getElementById('set-line-height').value,
+      lineWidth: document.getElementById('set-line-width').value,
       sentenceGap: document.getElementById('set-sentence-gap').value,
       clauseGap: document.getElementById('set-clause-gap').value,
       theme: document.documentElement.getAttribute('data-theme'),
@@ -1441,6 +1486,7 @@
     if (c.spacing) { document.getElementById('set-spacing').value = c.spacing; applyCSS('--letter-spacing', c.spacing+'em'); document.getElementById('spacing-value').textContent = c.spacing+'em'; }
     if (c.wordSpacing) { document.getElementById('set-word-spacing').value = c.wordSpacing; applyCSS('--tb-word-spacing', c.wordSpacing+'em'); document.getElementById('word-spacing-value').textContent = c.wordSpacing+'em'; }
     if (c.lineHeight) { document.getElementById('set-line-height').value = c.lineHeight; applyCSS('--tb-line-height', c.lineHeight); document.getElementById('line-height-value').textContent = c.lineHeight; }
+    if (c.lineWidth) { document.getElementById('set-line-width').value = c.lineWidth; applyCSS('--tb-max-width', c.lineWidth + '%'); document.getElementById('line-width-value').textContent = c.lineWidth + '%'; }
     if (c.theme) {
       document.documentElement.setAttribute('data-theme', c.theme);
       themeMenu.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.theme === c.theme));
