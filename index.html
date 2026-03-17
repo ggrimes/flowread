@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="stylesheet" href="https://fonts.cdnfonts.com/css/opendyslexic">
 <title>flowread</title>
 <style>
   /* ===== Theme Variables ===== */
@@ -415,6 +416,9 @@
   /* ===== TTS indicator ===== */
   .tts-active { color: var(--center-color) !important; }
 
+  /* ===== Bionic Reading ===== */
+  .bionic-bold { font-weight: 700; color: var(--ui-text); }
+
   /* ===== Scrollbar ===== */
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: var(--bg-color); }
@@ -515,6 +519,7 @@
       <div class="s-item"><label>Font Family</label>
         <select id="set-font">
           <option value="'Courier New', monospace">Courier New</option>
+          <option value="'OpenDyslexic', sans-serif">OpenDyslexic</option>
           <option value="'Georgia', serif">Georgia</option>
           <option value="'Verdana', sans-serif">Verdana</option>
           <option value="'Arial', sans-serif">Arial</option>
@@ -531,6 +536,7 @@
       <div class="s-item"><div class="s-row"><label>Words Per Flash</label><span class="s-val" id="chunk-value">1</span></div>
         <input type="range" id="set-chunk" min="1" max="3" step="1" value="1"></div>
       <div class="toggle-row"><label>Smart Pacing</label><input type="checkbox" class="toggle-switch" id="set-smart-pace" checked></div>
+      <div class="toggle-row"><label>Bionic Reading</label><input type="checkbox" class="toggle-switch" id="set-bionic"></div>
       <div class="s-item"><label>Center Letter Color</label><input type="color" id="set-center-color" value="#ff00ff"></div>
       <div class="s-item"><label>Word Color</label><input type="color" id="set-text-color" value="#a0a0a0"></div>
     </div></div>
@@ -600,7 +606,10 @@
     </div>
     <div id="paste-tab" class="tab-content active">
       <textarea id="paste-area" placeholder="Paste your text here..."></textarea>
-      <button class="load-btn" id="load-paste-btn">Load Text</button>
+      <div style="display:flex;gap:8px;">
+        <button class="load-btn" id="load-paste-btn" style="flex:1;">Load Text</button>
+        <button class="load-btn" id="btn-clipboard" style="flex:1;background:transparent;border:1px solid var(--border-color);color:var(--ui-text);">Paste from Clipboard</button>
+      </div>
     </div>
     <div id="file-tab" class="tab-content">
       <div class="drop-zone" id="drop-zone">
@@ -705,6 +714,7 @@
   let chunkSize = 1;
   let smartPace = true;
   let ttsEnabled = false;
+  let bionicMode = false;
   let highlights = [];
   let sections = []; // {wordIndex, title}
   let readStartTime = null;
@@ -825,6 +835,21 @@
   document.getElementById('load-paste-btn').addEventListener('click', () => {
     const text = document.getElementById('paste-area').value.trim();
     if (text) { docTitle = 'Pasted Text'; loadText(text); }
+  });
+
+  // ===== Clipboard import =====
+  document.getElementById('btn-clipboard').addEventListener('click', async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text && text.trim()) {
+        document.getElementById('paste-area').value = text;
+        docTitle = 'Clipboard Text';
+        loadText(text.trim());
+      } else { alert('Clipboard is empty.'); }
+    } catch (err) {
+      alert('Could not read clipboard. Your browser may require permission.');
+      console.error(err);
+    }
   });
 
   // ===== New text =====
@@ -1018,10 +1043,19 @@
       }
 
       const span = document.createElement('span');
-      span.textContent = w;
       span.dataset.index = i;
       span.addEventListener('click', () => jumpToWord(i));
       span.style.cursor = 'pointer';
+      if (bionicMode && w.length > 1) {
+        const boldLen = Math.ceil(w.length / 2);
+        const b = document.createElement('span');
+        b.className = 'bionic-bold';
+        b.textContent = w.slice(0, boldLen);
+        span.appendChild(b);
+        span.appendChild(document.createTextNode(w.slice(boldLen)));
+      } else {
+        span.textContent = w;
+      }
       if (highlights.includes(i)) span.classList.add('highlighted');
       par().appendChild(span);
 
@@ -1362,6 +1396,7 @@
     if (words.length > 0) displayWord(wordIndex);
   });
   document.getElementById('set-smart-pace').addEventListener('change', e => { smartPace = e.target.checked; });
+  document.getElementById('set-bionic').addEventListener('change', e => { bionicMode = e.target.checked; if (words.length>0) buildTextBody(); });
 
   function updateTBVis() {
     const s = layoutMode === 'sentence';
@@ -1380,7 +1415,7 @@
   // ===== Presets =====
   function getConfig() {
     return {
-      wpm, chunkSize, contextWords, smartPace, layoutMode, showBullets, showClauseBreaks,
+      wpm, chunkSize, contextWords, smartPace, bionicMode, layoutMode, showBullets, showClauseBreaks,
       font: document.getElementById('set-font').value,
       fontSize: document.getElementById('set-font-size').value,
       spacing: document.getElementById('set-spacing').value,
@@ -1397,6 +1432,7 @@
     if (c.chunkSize) { chunkSize = c.chunkSize; document.getElementById('set-chunk').value = chunkSize; document.getElementById('chunk-value').textContent = chunkSize; }
     if (c.contextWords !== undefined) { contextWords = c.contextWords; document.getElementById('set-context-words').value = contextWords; document.getElementById('context-words-value').textContent = contextWords; }
     if (c.smartPace !== undefined) { smartPace = c.smartPace; document.getElementById('set-smart-pace').checked = smartPace; }
+    if (c.bionicMode !== undefined) { bionicMode = c.bionicMode; document.getElementById('set-bionic').checked = bionicMode; }
     if (c.layoutMode) { layoutMode = c.layoutMode; document.getElementById('set-layout').value = layoutMode; }
     if (c.showBullets !== undefined) { showBullets = c.showBullets; document.getElementById('set-bullets').checked = showBullets; }
     if (c.showClauseBreaks !== undefined) { showClauseBreaks = c.showClauseBreaks; document.getElementById('set-clause-breaks').checked = showClauseBreaks; }
