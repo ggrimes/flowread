@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SpeedRead</title>
+<title>flowread</title>
 <style>
   /* ===== Theme Variables ===== */
   [data-theme="dark"] {
@@ -472,7 +472,7 @@
 
 <!-- ===== Top Bar ===== -->
 <div class="top-bar">
-  <h1>SpeedRead</h1>
+  <h1>flowread</h1>
   <div class="top-bar-actions">
     <button class="top-btn" id="btn-new-text" style="display:none;" title="Load different text">
       <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -1295,7 +1295,7 @@
 
   document.getElementById('btn-export-highlights').addEventListener('click', () => {
     if (highlights.length === 0) return;
-    let output = 'SpeedRead Highlights — ' + (docTitle || 'Untitled') + '\n';
+    let output = 'flowread Highlights — ' + (docTitle || 'Untitled') + '\n';
     output += '='.repeat(40) + '\n\n';
     highlights.sort((a,b) => a-b).forEach(idx => {
       const start = Math.max(0, idx - 5);
