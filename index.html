@@ -621,6 +621,21 @@
     </div>
   </div>
 
+  <!-- Intro -->
+  <div class="input-section" id="intro-section" style="text-align:left;">
+    <h2 style="font-size:1.1rem;text-transform:none;letter-spacing:0;color:var(--ui-text);margin-bottom:10px;">Read faster. Read easier.</h2>
+    <p style="font-size:0.88rem;color:var(--ui-muted);line-height:1.7;margin-bottom:10px;">
+      flowread shows one word at a time at a speed you control — helping you stay focused and reducing the eye tracking that can make reading tiring, especially for people with dyslexia.
+    </p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:0.78rem;color:var(--ui-faint);">
+      <span>📄 Paste text, upload a file (PDF, DOCX, EPUB) or load from a URL</span>
+      <span>🔤 Choose a dyslexia-friendly font like OpenDyslexic or Arial</span>
+      <span>🎨 Pick a tinted background to reduce visual stress</span>
+      <span>🔊 Enable text-to-speech to hear words as you read</span>
+      <span>⚡ Adjust speed from slow and steady to rapid fire</span>
+    </div>
+  </div>
+
   <!-- Input Section -->
   <div class="input-section" id="input-section">
     <h2>Load Text</h2>
@@ -885,6 +900,7 @@
     document.getElementById('highlights-section').classList.remove('visible');
     ['btn-new-text','btn-settings','btn-focus','btn-tts'].forEach(id => document.getElementById(id).style.display = 'none');
     inputSection.style.display = '';
+    document.getElementById('intro-section').style.display = '';
     if (statsInterval) { clearInterval(statsInterval); statsInterval = null; }
   });
 
@@ -1002,6 +1018,7 @@
     textBodySection.classList.add('visible');
     ['btn-new-text','btn-settings','btn-focus','btn-tts'].forEach(id => document.getElementById(id).style.display = '');
     inputSection.style.display = 'none';
+    document.getElementById('intro-section').style.display = 'none';
     document.getElementById('resume-banner').classList.remove('visible');
 
     if (sections.length > 1) document.getElementById('chapter-nav').style.display = '';
